@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>E-Commerce Admin — Demo UI</title>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root{
+      --bg:#f3f6fb;
+      --card:#ffffff;
+      --muted:#6b7280;
+      --accent:#2563eb;
+      --sidebar:#0f1724;
+      --glass: rgba(255,255,255,0.6);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;}
+    body{
+      margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;
+      background:linear-gradient(180deg,var(--bg) 0%, #eef2ff 100%);
+      color:#111827; --safe-area-inset-top:env(safe-area-inset-top);
+    }
+
+    /* APP LAYOUT */
+    .app{
+      display:grid;grid-template-columns:260px 1fr;min-height:100vh;gap:20px;
+    }
+
+    /* SIDEBAR */
+    .sidebar{
+      background:linear-gradient(180deg,var(--sidebar),#0b1220);
+      color:#fff;padding:22px 18px;position:relative;overflow:auto;
+    }
+    .brand{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+    .brand .logo{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,#09f,#3af);display:flex;align-items:center;justify-content:center;font-weight:700}
+    .brand h1{font-size:18px;margin:0}
+    .nav{margin-top:12px}
+    .nav a{display:flex;align-items:center;gap:12px;padding:10px 10px;border-radius:8px;color:#cbd5e1;text-decoration:none;font-weight:600}
+    .nav a:hover,.nav a.active{background:rgba(255,255,255,0.06);color:#fff}
+    .nav .section{margin-top:12px;padding:8px 8px;color:#94a3b8;font-size:12px}
+
+    /* TOPBAR + MAIN */
+    .mainWrap{display:flex;flex-direction:column;min-height:100vh}
+    .topbar{height:68px;background:transparent;display:flex;align-items:center;justify-content:space-between;padding:10px 22px}
+    .leftTools{display:flex;align-items:center;gap:12px}
+    .hambtn{display:inline-grid;place-items:center;width:44px;height:44px;border-radius:8px;background:rgba(0,0,0,0.06);cursor:pointer}
+    .search{display:flex;align-items:center;gap:10px;background:var(--card);padding:8px 12px;border-radius:10px;box-shadow:0 4px 10px rgba(2,6,23,0.06);min-width:360px}
+    .search input{border:0;outline:0;background:transparent;font-size:14px}
+
+    .actions{display:flex;align-items:center;gap:14px}
+    .iconbtn{width:44px;height:44px;border-radius:10px;background:var(--card);display:grid;place-items:center;box-shadow:0 6px 14px rgba(2,6,23,0.06);cursor:pointer}
+    .profile{display:flex;align-items:center;gap:10px;background:var(--card);padding:6px 10px;border-radius:12px;box-shadow:0 6px 14px rgba(2,6,23,0.06);cursor:pointer}
+    .profile img{width:36px;height:36px;border-radius:999px}
+
+    /* CONTENT */
+    .content{padding:18px 26px 60px}
+    .pageTitle{font-size:22px;margin:6px 0 18px}
+
+    /* DASHBOARD CARDS */
+    .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+    .card{background:var(--card);padding:18px;border-radius:12px;box-shadow:0 8px 20px rgba(2,6,23,0.06);}
+    .card .label{font-size:13px;color:var(--muted)}
+    .card .value{font-size:20px;font-weight:700;margin-top:8px}
+
+    .bigCard{grid-column:span 2;display:flex;gap:16px;align-items:center}
+    .bigCard .left{flex:1}
+    .bigCard .right{width:320px}
+
+    /* TABLES & PANELS */
+    .panel{margin-top:18px;background:var(--card);padding:14px;border-radius:12px;box-shadow:0 8px 20px rgba(2,6,23,0.04)}
+    table{width:100%;border-collapse:collapse}
+    thead th{background:linear-gradient(90deg,#eef2ff,#fff);text-align:left;padding:12px;font-weight:700;font-size:13px}
+    tbody td{padding:12px;border-top:1px solid #f1f5f9}
+    .status{padding:6px 10px;border-radius:999px;font-weight:600;font-size:13px}
+    .status.paid{background:#ecfdf5;color:#15803d}
+    .status.pending{background:#fff7ed;color:#c2410c}
+    .status.cancel{background:#fff1f2;color:#be123c}
+
+    /* Responsive tweaks */
+    @media (max-width:1100px){
+      .cards{grid-template-columns:repeat(2,1fr)}
+      .bigCard .right{width:260px}
+      .search{min-width:220px}
+    }
+    @media (max-width:760px){
+      .app{grid-template-columns:1fr}
+      .sidebar{position:fixed;left:-320px;top:0;bottom:0;z-index:40;transition:left .25s}
+      .sidebar.open{left:0}
+      .mainWrap{margin-left:0}
+      .search{display:none}
+      .cards{grid-template-columns:1fr}
+      .bigCard{grid-column:auto}
+    }
+
+  </style>
+</head>
+<body>
+  <div class="app">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="logo">SA</div>
+        <div>
+          <div style="font-weight:700">Studio Admin</div>
+          <div style="font-size:12px;color:#94a3b8;margin-top:2px">e-commerce dashboard</div>
+        </div>
+      </div>
+
+      <div class="nav">
+        <a href="#" class="active" data-page="dashboard">📊 Dashboard</a>
+        <a href="#" data-page="products">📦 Products</a>
+        <a href="#" data-page="orders">🧾 Orders</a>
+        <a href="#" data-page="customers">👥 Customers</a>
+        <a href="#" data-page="analytics">📈 Analytics</a>
+        <div class="section">COMPONENTS</div>
+        <a href="#" data-page="settings">⚙️ Settings</a>
+        <a href="#" id="logoutLink">🚪 Log Out</a>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="mainWrap">
+
+      <!-- TOPBAR -->
+      <div class="topbar">
+        <div class="leftTools">
+          <div class="hambtn" id="hambtn" title="Toggle sidebar">☰</div>
+          <div class="search">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21 21l-4.35-4.35" stroke="#9aa4b2" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="11" cy="11" r="6" stroke="#9aa4b2" stroke-width="1.6"/></svg>
+            <input placeholder="Search menu or data..." />
+          </div>
+        </div>
+
+        <div class="actions">
+          <div class="iconbtn" title="Notifications">🔔</div>
+          <div class="iconbtn" title="Messages">✉️</div>
+          <div class="profile" id="profileBtn">
+            <img src="https://api.dicebear.com/7.x/identicon/svg?seed=admin" alt="avatar" />
+            <div>
+              <div style="font-weight:700">johnsmith@studio.com</div>
+              <div style="font-size:12px;color:var(--muted)">Admin</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTENT -->
+      <div class="content">
+
+        <!-- DASHBOARD PAGE -->
+        <div id="dashboardPage" class="page">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <div class="pageTitle">Hi, Sean. <span style="color:var(--muted);font-weight:500;font-size:14px;margin-left:8px">here's what's happening with your store today.</span></div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:center">
+              <button onclick="generateDemo()" style="padding:8px 12px;border-radius:8px;border:0;background:var(--accent);color:#fff;cursor:pointer">Run Demo</button>
+              <button style="padding:8px 12px;border-radius:8px;border:1px solid #e6eefb;background:transparent;cursor:pointer">Export</button>
+            </div>
+          </div>
+
+          <div class="cards" style="margin-top:18px">
+            <div class="card">
+              <div class="label">Weekly Earning</div>
+              <div class="value">$2,999.80</div>
+              <div style="margin-top:10px;color:var(--muted);font-size:13px">▲ 32% increase compare to last week</div>
+            </div>
+
+            <div class="card">
+              <div class="label">New Orders</div>
+              <div class="value">56</div>
+              <div style="margin-top:10px;color:var(--muted);font-size:13px">▲ 16% compare to last week</div>
+            </div>
+
+            <div class="card">
+              <div class="label">Unread Emails</div>
+              <div class="value">30</div>
+              <div style="margin-top:10px;color:var(--muted);font-size:13px">▼ 5% compare to last week</div>
+            </div>
+
+            <div class="card">
+              <div class="label">Page Views</div>
+              <div class="value">320.4k</div>
+              <div style="margin-top:10px;color:var(--muted);font-size:13px">▲ 20% compare to last week</div>
+            </div>
+          </div>
+
+          <div class="bigCard panel" style="margin-top:18px;display:grid;grid-template-columns:1fr 340px;gap:16px;">
+            <div class="left">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <div style="font-weight:700">Sales Overview</div>
+                <div style="color:var(--muted);font-size:13px">Last 30 days</div>
+              </div>
+              <canvas id="salesChart" style="margin-top:12px;max-height:260px"></canvas>
+            </div>
+            <div class="right">
+              <div style="font-weight:700;margin-bottom:12px">Top Products</div>
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <div>
+                    <div style="font-weight:700">Running Shoes</div>
+                    <div style="color:var(--muted);font-size:13px">Shoes • 1,230 sold</div>
+                  </div>
+                  <div style="font-weight:700">$45,230</div>
+                </div>
+
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <div>
+                    <div style="font-weight:700">Classic Tee</div>
+                    <div style="color:var(--muted);font-size:13px">Apparel • 840 sold</div>
+                  </div>
+                  <div style="font-weight:700">$18,420</div>
+                </div>
+
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <div>
+                    <div style="font-weight:700">Leather Bag</div>
+                    <div style="color:var(--muted);font-size:13px">Accessories • 510 sold</div>
+                  </div>
+                  <div style="font-weight:700">$12,900</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 420px;gap:18px;margin-top:18px;align-items:start">
+            <div class="panel">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                <div style="font-weight:700">Recent Orders</div>
+                <div style="color:var(--muted);font-size:13px">Showing latest 8</div>
+              </div>
+              <table>
+                <thead>
+                  <tr><th>#</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th></tr>
+                </thead>
+                <tbody id="ordersTbody">
+                  <!-- rows injected by JS -->
+                </tbody>
+              </table>
+            </div>
+
+            <div class="panel">
+              <div style="font-weight:700;margin-bottom:12px">Customers</div>
+              <table>
+                <thead><tr><th>Name</th><th>Email</th><th>Orders</th></tr></thead>
+                <tbody id="customersTbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- PRODUCTS PAGE -->
+        <div id="productsPage" class="page" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div class="pageTitle">Products</div>
+            <div><button style="padding:8px 12px;border-radius:8px;border:0;background:var(--accent);color:#fff;cursor:pointer" id="addProd">+ Add Product</button></div>
+          </div>
+
+          <div class="panel" style="margin-top:12px">
+            <table>
+              <thead><tr><th>ID</th><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Action</th></tr></thead>
+              <tbody id="productsTbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ORDERS PAGE -->
+        <div id="ordersPage" class="page" style="display:none">
+          <div class="pageTitle">Orders</div>
+          <div class="panel" style="margin-top:12px">
+            <table>
+              <thead><tr><th>Order</th><th>Customer</th><th>Total</th><th>Status</th><th>Date</th></tr></thead>
+              <tbody id="ordersListTbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- CUSTOMERS PAGE -->
+        <div id="customersPage" class="page" style="display:none">
+          <div class="pageTitle">Customers</div>
+          <div class="panel" style="margin-top:12px">
+            <table>
+              <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Joined</th></tr></thead>
+              <tbody id="custListTbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ANALYTICS PAGE -->
+        <div id="analyticsPage" class="page" style="display:none">
+          <div class="pageTitle">Analytics</div>
+          <div class="panel"><canvas id="visitorsChart" style="max-height:260px"></canvas></div>
+        </div>
+
+        <!-- SETTINGS PAGE -->
+        <div id="settingsPage" class="page" style="display:none">
+          <div class="pageTitle">Settings</div>
+          <div class="panel">
+            <label style="display:block;font-weight:600;margin-bottom:8px">Base API URL</label>
+            <input id="baseUrl" style="width:100%;padding:10px;border-radius:8px;border:1px solid #e6eefb" placeholder="https://api.yoursite.com" />
+            <div style="margin-top:12px"><button id="saveSettingsBtn" style="padding:8px 12px;border-radius:8px;border:0;background:var(--accent);color:#fff;">Save</button></div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    // ---------- BASIC NAVIGATION & SIDEBAR ----------
+    const sidebar = document.getElementById('sidebar');
+    const hambtn = document.getElementById('hambtn');
+    const links = document.querySelectorAll('.nav a[data-page]');
+    const pages = {
+      dashboard: document.getElementById('dashboardPage'),
+      products: document.getElementById('productsPage'),
+      orders: document.getElementById('ordersPage'),
+      customers: document.getElementById('customersPage'),
+      analytics: document.getElementById('analyticsPage'),
+      settings: document.getElementById('settingsPage')
+    };
+
+    hambtn.addEventListener('click', ()=> sidebar.classList.toggle('open'));
+
+    links.forEach(a=>{
+      a.addEventListener('click', (e)=>{
+        e.preventDefault();
+        links.forEach(x=>x.classList.remove('active'));
+        a.classList.add('active');
+        const page = a.dataset.page;
+        // show/hide pages
+        Object.values(pages).forEach(p=>p.style.display='none');
+        pages[page].style.display = 'block';
+        // close sidebar on mobile
+        sidebar.classList.remove('open');
+      });
+    });
+
+    // Logout (demo)
+    document.getElementById('logoutLink').addEventListener('click',(e)=>{
+      e.preventDefault();
+      alert('Demo logout — implement real logout when hooking to backend');
+    });
+
+    // ---------- DEMO DATA RENDERING ----------
+    const demoOrders = [
+      {id: 9871, customer:'John Doe', items:3, total:'$120.00', status:'paid', date:'2025-10-30'},
+      {id: 9872, customer:'Alice Smith', items:1, total:'$49.99', status:'pending', date:'2025-10-31'},
+      {id: 9873, customer:'Bob Martin', items:2, total:'$78.25', status:'paid', date:'2025-11-01'},
+      {id: 9874, customer:'Sam Green', items:5, total:'$220.90', status:'cancel', date:'2025-11-02'}
+    ];
+
+    const demoCustomers = [
+      {id:201, name:'John Doe', email:'john@example.com', joined:'2024-09-01'},
+      {id:202, name:'Alice Smith', email:'alice@example.com', joined:'2024-12-15'},
+      {id:203, name:'Bob Martin', email:'bob@example.com', joined:'2025-01-20'}
+    ];
+
+    function renderRecentOrders(){
+      const tbody = document.getElementById('ordersTbody');
+      tbody.innerHTML = demoOrders.map(o=>`
+        <tr>
+          <td>#${o.id}</td>
+          <td>${o.customer}</td>
+          <td>${o.items}</td>
+          <td>${o.total}</td>
+          <td><span class="status ${o.status}">${o.status}</span></td>
+        </tr>
+      `).join('');
+    }
+
+    function renderCustomers(){
+      document.getElementById('customersTbody').innerHTML = demoCustomers.map(c=>`
+        <tr><td>${c.name}</td><td>${c.email}</td><td>${c.id}</td></tr>
+      `).join('');
+
+      document.getElementById('custListTbody').innerHTML = demoCustomers.map(c=>`
+        <tr><td>${c.id}</td><td>${c.name}</td><td>${c.email}</td><td>${c.joined}</td></tr>
+      `).join('');
+    }
+
+    function renderProductsTable(){
+      const prod = [
+        {id:1,name:'Running Shoes',cat:'Shoes',price:'$45',stock:123},
+        {id:2,name:'Classic Tee',cat:'Apparel',price:'$18',stock:320},
+        {id:3,name:'Leather Bag',cat:'Accessories',price:'$129',stock:54},
+      ];
+      document.getElementById('productsTbody').innerHTML = prod.map(p=>`
+        <tr><td>${p.id}</td><td>${p.name}</td><td>${p.cat}</td><td>${p.price}</td><td>${p.stock}</td><td><button style=\"padding:6px 8px;border-radius:8px\">Edit</button></td></tr>
+      `).join('');
+
+      document.getElementById('ordersListTbody').innerHTML = demoOrders.map(o=>`
+        <tr><td>#${o.id}</td><td>${o.customer}</td><td>${o.total}</td><td><span class=\"status ${o.status}\">${o.status}</span></td><td>${o.date}</td></tr>
+      `).join('');
+    }
+
+    renderRecentOrders();renderCustomers();renderProductsTable();
+
+    // ---------- CHARTS ----------
+    const salesCtx = document.getElementById('salesChart').getContext('2d');
+    const salesChart = new Chart(salesCtx, {
+      type:'line',
+      data:{
+        labels: Array.from({length:12},(_,i)=>`Day ${i+1}`),
+        datasets:[{label:'Sales',data:[120,200,180,270,300,250,320,360,400,420,380,450],fill:true,tension:0.3,borderWidth:2,backgroundColor:'rgba(37,99,235,0.12)',borderColor:'rgba(37,99,235,0.9)'}]
+      },
+      options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}},maintainAspectRatio:false}
+    });
+
+    const visCtx = document.getElementById('visitorsChart')?.getContext('2d');
+    if(visCtx){
+      new Chart(visCtx,{type:'bar',data:{labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],datasets:[{label:'Visitors',data:[1200,1500,1100,2000,1800,2100,2400],backgroundColor:'rgba(99,102,241,0.9)'}]},options:{plugins:{legend:{display:false}},maintainAspectRatio:false}})
+    }
+
+    // ---------- DEMO ACTIONS ----------
+    window.generateDemo = ()=>{
+      alert('Running demo tasks... (in real app this will trigger API checks & health endpoints)');
+    }
+
+    // Save settings (demo)
+    document.getElementById('saveSettingsBtn').addEventListener('click',()=>{
+      const url = document.getElementById('baseUrl').value.trim();
+      localStorage.setItem('baseApiUrl',url);
+      alert('Saved base URL (demo): '+url);
+    });
+
+    // Add product demo
+    document.getElementById('addProd').addEventListener('click',()=>{
+      alert('Open modal to add product — modal not implemented in this demo.');
+    });
+
+  </script>
+</body>
+</html>
